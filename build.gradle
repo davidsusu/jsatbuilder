@@ -42,7 +42,7 @@ dependencies {
     
     implementation 'org.ow2.sat4j:org.ow2.sat4j.core:2.3.5'
     implementation 'org.ow2.sat4j:org.ow2.sat4j.maxsat:2.3.5'
-    implementation 'org.ow2.sat4j:org.ow2.sat4j.pb:2.3.5 '
+    implementation 'org.ow2.sat4j:org.ow2.sat4j.pb:2.3.5'
 }
 
 defaultTasks 'build'
