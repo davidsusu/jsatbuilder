@@ -1,19 +1,21 @@
 package hu.webarticum.jsatbuilder.builder.core;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import hu.webarticum.jsatbuilder.builder.common.DefaultViability;
 import hu.webarticum.jsatbuilder.solver.core.Solver;
 
-public class CoreTest {
+class CoreTest {
 
     @Test
-    public void testCollapse() throws CollapseException {
+    void testCollapse() throws CollapseException {
         Variable variable1 = new Variable();
         Variable variable2 = new Variable();
         Variable variable3 = new Variable();
@@ -21,37 +23,36 @@ public class CoreTest {
         Constraint constraint1 = new TestConstraint(variable1, false);
         Constraint constraint2 = new TestConstraint(variable2, true);
 
-        assertFalse(variable1.isRemoved());
-        assertFalse(variable2.isRemoved());
-        assertFalse(variable3.isRemoved());
-        assertFalse(constraint1.isRemoved());
-        assertFalse(constraint2.isRemoved());
+        assertThat(variable1.isRemoved()).isFalse();
+        assertThat(variable2.isRemoved()).isFalse();
+        assertThat(variable3.isRemoved()).isFalse();
+        assertThat(constraint1.isRemoved()).isFalse();
+        assertThat(constraint2.isRemoved()).isFalse();
         
         
         variable1.remove();
 
-        assertTrue(variable1.isRemoved());
-        assertFalse(variable2.isRemoved());
-        assertFalse(variable3.isRemoved());
-        assertTrue(constraint1.isRemoved());
-        assertFalse(constraint2.isRemoved());
+        assertThat(variable1.isRemoved()).isTrue();
+        assertThat(variable2.isRemoved()).isFalse();
+        assertThat(variable3.isRemoved()).isFalse();
+        assertThat(constraint1.isRemoved()).isTrue();
+        assertThat(constraint2.isRemoved()).isFalse();
         
-        try {
-            variable2.remove();
-            fail();
-        } catch (CollapseException e) {
-            assertSame(constraint2, e.getConstraint());
-        }
-
-        assertTrue(variable1.isRemoved());
-        assertTrue(variable2.isRemoved());
-        assertFalse(variable3.isRemoved());
-        assertTrue(constraint1.isRemoved());
-        assertTrue(constraint2.isRemoved());
+        assertThatThrownBy(() -> variable2.remove())
+            .isInstanceOf(CollapseException.class)
+            .extracting(e -> ((CollapseException)e).getConstraint())
+            .isSameAs(constraint2)
+        ;
+        
+        assertThat(variable1.isRemoved()).isTrue();
+        assertThat(variable2.isRemoved()).isTrue();
+        assertThat(variable3.isRemoved()).isFalse();
+        assertThat(constraint1.isRemoved()).isTrue();
+        assertThat(constraint2.isRemoved()).isTrue();
         
         variable3.remove();
 
-        assertTrue(variable3.isRemoved());
+        assertThat(variable3.isRemoved()).isTrue();
     }
 
     public class TestConstraint extends AbstractConstraint {

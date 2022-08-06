@@ -1,18 +1,18 @@
 package hu.webarticum.jsatbuilder.builder.common;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import hu.webarticum.jsatbuilder.builder.core.ConstraintSetSolverFiller;
 import hu.webarticum.jsatbuilder.builder.core.Variable;
 import hu.webarticum.jsatbuilder.solver.core.Solver;
 
 
-public class CommonTest {
+class CommonTest {
 
     @Test
-    public void test1() throws Exception {
+    void test1() throws Exception {
         ConstraintSetSolverFiller constraints = new ConstraintSetSolverFiller(true);
 
         Variable v1_1 = new Variable("1.1");
@@ -28,41 +28,26 @@ public class CommonTest {
         constraints.add(new OrConstraint(v1_2, v2_2));
         
         Solver solver = createSolverWith(constraints);
+        boolean success = solver.run();
         
-        if (!solver.run()) {
-            fail("Solution not found!");
-        }
+        assertThat(success).as("A model should be found").isTrue();
         
         Solver.Model model = solver.getModel();
-        
-        if (model.get(v1_1)) {
-            fail("Wrong solution (1.1 must be false)");
-        }
 
-        if (!model.get(v1_2)) {
-            fail("Wrong solution (1.2 must be true)");
-        }
-
-        if (model.get(v1_3)) {
-            fail("Wrong solution (1.3 must be false)");
-        }
-
-        if (!model.get(v2_1)) {
-            fail("Wrong solution (2.1 must be true)");
-        }
-
-        if (model.get(v2_2)) {
-            fail("Wrong solution (2.2 must be false)");
-        }
+        assertThat(model.get(v1_1)).as("Variable 1.1 must be false").isFalse();
+        assertThat(model.get(v1_2)).as("Variable 1.2 must be true").isTrue();
+        assertThat(model.get(v1_3)).as("Variable 1.3 must be false").isFalse();
+        assertThat(model.get(v2_1)).as("Variable 2.1 must be true").isTrue();
+        assertThat(model.get(v2_2)).as("Variable 2.2 must be false").isFalse();
     }
 
     @Test
-    public void test2AIsTrue() throws Exception {
+    void test2AIsTrue() throws Exception {
         doSimpleTest(true);
     }
 
     @Test
-    public void test2AIsFalse() throws Exception {
+    void test2AIsFalse() throws Exception {
         doSimpleTest(false);
     }
     
@@ -85,22 +70,21 @@ public class CommonTest {
         }));
 
         Solver solver = createSolverWith(constraints);
+        boolean success = solver.run();
         
-        if (!solver.run()) {
-            fail("Model was not found");
-        }
+        assertThat(success).as("A model should be found").isTrue();
         
         Solver.Model model = solver.getModel();
 
-        assertEquals(aIsTrue, model.get(a));
-        assertEquals(!aIsTrue, model.get(b));
-        assertEquals(aIsTrue, model.get(c));
-        assertEquals(!aIsTrue, model.get(d));
+        assertThat(model.get(a)).isEqualTo(aIsTrue);
+        assertThat(model.get(b)).isNotEqualTo(aIsTrue);
+        assertThat(model.get(c)).isEqualTo(aIsTrue);
+        assertThat(model.get(d)).isNotEqualTo(aIsTrue);
     }
     
     private Solver createSolverWith(ConstraintSetSolverFiller constraints) throws Exception {
         String className = "hu.webarticum.jsatbuilder.solver.sat4j.LightSat4jSolver";
-        Solver solver = (Solver)Class.forName(className).newInstance();
+        Solver solver = (Solver)Class.forName(className).getConstructor().newInstance();
         constraints.fillSolver(solver);
         return solver;
     }
