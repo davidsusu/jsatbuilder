@@ -1,0 +1,122 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'signing'
+    id 'maven-publish'
+    id 'com.palantir.git-version' version '0.15.0'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+}
+
+sourceCompatibility = "1.8";
+targetCompatibility = "1.8";
+
+group = 'hu.webarticum'
+description = 'SAT formula builder with constraint dependency tracking, written in Java'
+
+def moduleName = 'hu.webarticum.jsatbuilder'
+def scmUrl = 'https://github.com/davidsusu/jsatbuilder.git'
+def websiteUrl = scmUrl.replaceAll(/\.git$/, "");
+
+def versionMatcher = gitVersion() =~ /^v?(\d+\.\d+\.)(\d+)(.*)$/
+if (versionMatcher.size() > 0) {
+    def versionMatch = versionMatcher[0]
+	def isVersionDirty = !versionMatch[3].isEmpty()
+	def versionPrefix = versionMatch[1]
+	def versionPatch = isVersionDirty ? (Integer.parseInt(versionMatch[2]) + 1) + "" : versionMatch[2];
+	def versionSuffix = isVersionDirty ? "-SNAPSHOT" : ""
+    version versionPrefix + versionPatch + versionSuffix
+} else {
+    version '0.1.0-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+    
+    implementation 'org.ow2.sat4j:org.ow2.sat4j.core:2.3.5'
+    implementation 'org.ow2.sat4j:org.ow2.sat4j.maxsat:2.3.5'
+    implementation 'org.ow2.sat4j:org.ow2.sat4j.pb:2.3.5 '
+}
+
+defaultTasks 'build'
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+jar {
+    manifest {
+        attributes('Automatic-Module-Name': moduleName)
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype()
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+signing {
+    required { true }
+    sign configurations.archives
+    sign publishing.publications.mavenJava
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'failed'
+        showExceptions true
+        exceptionFormat 'full'
+        showCauses true
+        showStackTraces true
+        showStandardStreams false
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:unchecked'
+    options.deprecation = true
+}
+
+project.plugins.withType(MavenPublishPlugin).all {
+    PublishingExtension publishing = project.extensions.getByType(PublishingExtension)
+    publishing.publications.withType(MavenPublication).all { mavenPublication ->
+        mavenPublication.pom {
+            name = project.name
+            description = project.description
+            url = websiteUrl
+            licenses {
+                license {
+                    name = 'The Apache Software License, Version 2.0'
+                    url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution = 'repo'
+                }
+            }
+            scm {
+                connection = 'scm:git:' + scmUrl
+                developerConnection = 'scm:git:' + scmUrl
+                url = scmUrl
+            }
+            developers {
+                developer {
+                    id = 'davidsusu'
+                    name = 'Dávid Horváth'
+                    email = 'horvath@webarticum.hu'
+                }
+            }
+        }
+    }
+}
