@@ -165,7 +165,7 @@ public abstract class AbstractSolver implements Solver {
         }
 
         public boolean isAtMost() {
-            return !hasMaximum;
+            return (hasMaximum && minimum <= 0);
         }
 
         public boolean isBound() {
